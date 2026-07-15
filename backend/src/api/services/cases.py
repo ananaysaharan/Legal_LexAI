@@ -50,13 +50,24 @@ class DocumentService:
         return result.scalars().all()
 
     @staticmethod
-    async def create_document_record(db: AsyncSession, case_id: UUID, filename: str, storage_path: str, content_type: str, size_bytes: int) -> Document:
+    async def create_document_record(
+        db: AsyncSession, 
+        case_id: UUID, 
+        filename: str, 
+        storage_path: str, 
+        content_type: str, 
+        size_bytes: int,
+        document_type: str = None,
+        version: str = None
+    ) -> Document:
         db_doc = Document(
             case_id=case_id,
             filename=filename,
             storage_path=storage_path,
             content_type=content_type,
-            size_bytes=size_bytes
+            size_bytes=size_bytes,
+            document_type=document_type,
+            version=version
         )
         db.add(db_doc)
         await db.commit()
@@ -79,4 +90,31 @@ class DocumentService:
     @staticmethod
     async def delete_document_record(db: AsyncSession, doc: Document) -> None:
         await db.delete(doc)
+        await db.commit()
+
+    @staticmethod
+    async def save_document_pages(db: AsyncSession, document_id: UUID, pages_data: List[dict]) -> None:
+        from src.api.db.models import DocumentPage
+        for page in pages_data:
+            db_page = DocumentPage(
+                document_id=document_id,
+                page_number=page["page_number"],
+                text_content=page["text_content"]
+            )
+            db.add(db_page)
+        await db.commit()
+
+    @staticmethod
+    async def save_document_chunks(db: AsyncSession, document_id: UUID, chunks_data: List[dict]) -> None:
+        from src.api.db.models import DocumentChunk
+        for chunk in chunks_data:
+            db_chunk = DocumentChunk(
+                document_id=document_id,
+                page_number=chunk["page_number"],
+                chunk_index=chunk["chunk_index"],
+                section=chunk.get("section"),
+                clause=chunk.get("clause"),
+                text_content=chunk["text_content"]
+            )
+            db.add(db_chunk)
         await db.commit()

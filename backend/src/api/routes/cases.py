@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.db.database import get_db
@@ -45,6 +45,8 @@ async def list_documents(case_id: UUID, db: AsyncSession = DbSession, current_us
 async def upload_document(
     case_id: UUID, 
     file: UploadFile = File(...), 
+    document_type: str = Form(None),
+    version: str = Form(None),
     db: AsyncSession = DbSession, 
     current_user: dict = CurrentUser
 ):
@@ -76,9 +78,36 @@ async def upload_document(
         filename=file.filename,
         storage_path=storage_path,
         content_type=file.content_type,
-        size_bytes=len(file_bytes)
+        size_bytes=len(file_bytes),
+        document_type=document_type,
+        version=version
     )
     
+    # 7. Parse PDF and save pages
+    from src.api.services.parsing import extract_text_from_pdf
+    from src.api.services.chunking import chunk_text
+    try:
+        pages_data = extract_text_from_pdf(file_bytes)
+        await DocumentService.save_document_pages(db, document.id, pages_data)
+        
+        # 8. Chunk the parsed text
+        chunks_data = []
+        for page in pages_data:
+            page_chunks = chunk_text(page["text_content"])
+            for idx, chunk_dict in enumerate(page_chunks):
+                chunks_data.append({
+                    "page_number": page["page_number"],
+                    "chunk_index": idx,
+                    "section": chunk_dict.get("section"),
+                    "clause": chunk_dict.get("clause"),
+                    "text_content": chunk_dict.get("text_content")
+                })
+                
+        await DocumentService.save_document_chunks(db, document.id, chunks_data)
+    except Exception as e:
+        # Note: If parsing/chunking fails, the document record and file still exist.
+        print(f"Parsing/Chunking warning: {e}")
+
     return document
 
 @router.delete("/{case_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

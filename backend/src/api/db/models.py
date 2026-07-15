@@ -30,7 +30,39 @@ class Document(Base):
     storage_path = Column(String, nullable=False, unique=True)
     content_type = Column(String, nullable=False)
     size_bytes = Column(Integer, nullable=False)
+    document_type = Column(String, nullable=True)
+    version = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
     case = relationship("Case", back_populates="documents")
+    pages = relationship("DocumentPage", back_populates="document", cascade="all, delete-orphan")
+    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+
+
+class DocumentPage(Base):
+    __tablename__ = "document_pages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    page_number = Column(Integer, nullable=False)
+    text_content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    document = relationship("Document", back_populates="pages")
+
+class DocumentChunk(Base):
+    __tablename__ = "document_chunks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    page_number = Column(Integer, nullable=False)
+    chunk_index = Column(Integer, nullable=False)
+    section = Column(String, nullable=True)
+    clause = Column(String, nullable=True)
+    text_content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    document = relationship("Document", back_populates="chunks")
