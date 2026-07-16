@@ -16,6 +16,8 @@ dependencies = [
     "supabase>=2.3.0",
     "python-multipart>=0.0.9",
     "pymupdf>=1.23.0",
+    "pgvector>=0.2.5",
+    "fastembed>=0.2.6",
 ]
 
 [build-system]

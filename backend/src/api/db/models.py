@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.dialects.postgresql import UUID
+from pgvector.sqlalchemy import Vector
 
 Base = declarative_base()
 
@@ -62,6 +63,7 @@ class DocumentChunk(Base):
     section = Column(String, nullable=True)
     clause = Column(String, nullable=True)
     text_content = Column(Text, nullable=False)
+    embedding = Column(Vector(384), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

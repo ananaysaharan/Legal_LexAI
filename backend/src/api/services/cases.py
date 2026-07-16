@@ -114,7 +114,8 @@ class DocumentService:
                 chunk_index=chunk["chunk_index"],
                 section=chunk.get("section"),
                 clause=chunk.get("clause"),
-                text_content=chunk["text_content"]
+                text_content=chunk["text_content"],
+                embedding=chunk.get("embedding")
             )
             db.add(db_chunk)
         await db.commit()

@@ -86,6 +86,7 @@ async def upload_document(
     # 7. Parse PDF and save pages
     from src.api.services.parsing import extract_text_from_pdf
     from src.api.services.chunking import chunk_text
+    from src.api.services.embeddings import generate_embeddings
     try:
         pages_data = extract_text_from_pdf(file_bytes)
         await DocumentService.save_document_pages(db, document.id, pages_data)
@@ -102,7 +103,17 @@ async def upload_document(
                     "clause": chunk_dict.get("clause"),
                     "text_content": chunk_dict.get("text_content")
                 })
+        
+        # 9. Generate Embeddings for all chunks (Batched)
+        if chunks_data:
+            texts_to_embed = [chunk["text_content"] for chunk in chunks_data]
+            embeddings = generate_embeddings(texts_to_embed)
+            
+            # Reattach embeddings to chunk data
+            for chunk, emb in zip(chunks_data, embeddings):
+                chunk["embedding"] = emb
                 
+        # 10. Save chunks and embeddings to DB
         await DocumentService.save_document_chunks(db, document.id, chunks_data)
     except Exception as e:
         # Note: If parsing/chunking fails, the document record and file still exist.
