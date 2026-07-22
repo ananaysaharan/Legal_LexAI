@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.routes import health, users, cases
+from src.api.routes import health, users, cases, intents, plans
 from src.api.config import settings
 
 def create_app() -> FastAPI:
@@ -27,6 +27,8 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix="/health", tags=["health"])
     app.include_router(users.router, prefix="/users", tags=["users"])
     app.include_router(cases.router, prefix="/cases", tags=["cases"])
+    app.include_router(intents.router, prefix="/intents", tags=["intents"])
+    app.include_router(plans.router, prefix="/plans", tags=["plans"])
 
     return app
 
