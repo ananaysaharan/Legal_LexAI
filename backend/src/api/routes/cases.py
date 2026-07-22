@@ -7,8 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.db.database import get_db
 from src.api.core.security import get_current_user
 from src.api.schemas.cases import CaseCreate, CaseResponse, DocumentResponse
+from src.api.schemas.chat import ChatRequest, ChatResponse
 from src.api.schemas.search import SearchRequest, SearchResponse
 from src.api.services.cases import CaseService, DocumentService
+from src.api.services.llm import LLMProviderError
+from src.api.services.rag_chat import NoGroundedContextError, RAGChatService
 from src.api.services.storage import storage_service
 
 router = APIRouter()
@@ -133,3 +136,47 @@ async def semantic_search(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Search failed")
+
+
+# --- RAG CHAT ---
+
+@router.post("/{case_id}/chat", response_model=ChatResponse)
+async def rag_chat(
+    case_id: UUID,
+    request: ChatRequest,
+    db: AsyncSession = DbSession,
+    current_user: dict = CurrentUser,
+):
+    """Answer a question from case-scoped retrieval evidence using Gemini via LiteLLM."""
+    try:
+        result = await RAGChatService().chat(
+            db=db,
+            case_id=case_id,
+            user_id=current_user["sub"],
+            question=request.question,
+            top_k=request.top_k,
+            conversation_id=request.conversation_id,
+        )
+        return ChatResponse(
+            conversation_id=result.conversation_id,
+            message_id=result.message_id,
+            answer=result.answer,
+            sources=result.sources,
+            citations=result.citations,
+            prompt_template_version=result.prompt_template_version,
+        )
+    except NoGroundedContextError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    except ValueError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except LLMProviderError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The language model is temporarily unavailable",
+        )
+    except Exception:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Chat failed")

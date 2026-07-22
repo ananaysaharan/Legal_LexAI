@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr
 
 class Settings(BaseSettings):
     """
@@ -11,6 +12,10 @@ class Settings(BaseSettings):
     supabase_url: str = "https://your-project.supabase.co"
     supabase_jwt_secret: str = "your-jwt-secret-here"
     supabase_key: str = "your-supabase-service-role-key"
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = "gemini/gemini-2.0-flash"
+    conversation_window_messages: int = Field(default=8, ge=0, le=50)
+    conversation_history_max_characters: int = Field(default=6_000, ge=0, le=24_000)
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

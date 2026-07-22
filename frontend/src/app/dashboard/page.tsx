@@ -60,8 +60,8 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Your Cases</h2>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button>Create Case</Button>
+          <DialogTrigger render={<Button />}>
+            Create Case
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
