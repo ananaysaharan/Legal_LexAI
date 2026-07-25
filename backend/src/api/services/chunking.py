@@ -75,18 +75,13 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[Di
             current_block.clear()
 
     for line in lines:
-        is_header = False
-        
         if SECTION_REGEX.match(line):
             flush_block()
             current_section = line.strip()
             current_clause = None
-            is_header = True
         elif CLAUSE_REGEX.match(line):
             flush_block()
             current_clause = line.strip()
-            is_header = True
-            
         current_block.append(line)
         
         # If it was a header, we immediately flush it so the header is its own small block 

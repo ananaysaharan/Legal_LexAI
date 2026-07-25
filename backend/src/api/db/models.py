@@ -42,6 +42,9 @@ class Case(Base):
     memories = relationship(
         "CaseMemory", back_populates="case", cascade="all, delete-orphan"
     )
+    generated_documents = relationship(
+        "GeneratedDocument", back_populates="case", cascade="all, delete-orphan"
+    )
 
 
 class Document(Base):
@@ -243,3 +246,71 @@ class UserPreferenceMemory(Base):
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+
+
+class GeneratedDocument(Base):
+    """A versioned AI-produced legal artifact, distinct from chat and uploaded sources."""
+
+    __tablename__ = "generated_documents"
+    __table_args__ = (
+        UniqueConstraint(
+            "case_id", "document_key", "version", name="uq_generated_document_version"
+        ),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    case_id = Column(
+        UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    source_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("ai_executions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    parent_document_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("generated_documents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    document_type = Column(String(80), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    document_key = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    version = Column(Integer, nullable=False)
+    status = Column(String(30), nullable=False, default="draft")
+    edit_operation = Column(String(30), nullable=False, default="generate")
+    edit_instructions = Column(Text, nullable=True)
+    metadata_data = Column(JSONB, nullable=False, default=dict)
+    citations_data = Column(JSONB, nullable=False, default=list)
+    deleted_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    case = relationship("Case", back_populates="generated_documents")
+    parent_document = relationship("GeneratedDocument", remote_side=[id])
+
+
+class BackgroundJob(Base):
+    """Durable status record for work delegated to background workers."""
+
+    __tablename__ = "background_jobs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(String, nullable=False, index=True)
+    case_id = Column(
+        UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    job_type = Column(String(80), nullable=False, index=True)
+    status = Column(String(30), nullable=False, default="queued", index=True)
+    payload_data = Column(JSONB, nullable=False, default=dict)
+    result_data = Column(JSONB, nullable=True)
+    error_data = Column(JSONB, nullable=True)
+    attempt_count = Column(Integer, nullable=False, default=0)
+    celery_task_id = Column(String(255), nullable=True, unique=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)

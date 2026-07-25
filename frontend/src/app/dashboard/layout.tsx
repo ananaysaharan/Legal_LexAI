@@ -43,7 +43,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b py-4 px-8 flex justify-between items-center">
-        <div className="flex items-center gap-6"><Link href="/dashboard" className="text-xl font-bold">AI SaaS Platform</Link><Link href="/dashboard/memory" className="text-sm text-gray-500 hover:text-gray-900">Memory</Link></div>
+        <div className="flex items-center gap-6"><Link href="/dashboard" className="text-xl font-bold">AI SaaS Platform</Link><Link href="/dashboard/documents" className="text-sm text-gray-500 hover:text-gray-900">Documents</Link><Link href="/dashboard/memory" className="text-sm text-gray-500 hover:text-gray-900">Memory</Link></div>
         <button onClick={() => supabase.auth.signOut()} className="text-sm text-gray-500 hover:text-gray-900">Sign Out</button>
       </header>
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">

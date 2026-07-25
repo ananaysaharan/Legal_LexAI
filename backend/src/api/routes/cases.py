@@ -1,11 +1,12 @@
 import uuid
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.db.database import get_db
 from src.api.core.security import get_current_user
+from src.api.db.database import get_db
 from src.api.schemas.cases import CaseCreate, CaseResponse, DocumentResponse
 from src.api.schemas.chat import ChatRequest, ChatResponse
 from src.api.schemas.search import SearchRequest, SearchResponse
@@ -13,8 +14,10 @@ from src.api.services.cases import CaseService, DocumentService
 from src.api.services.llm import LLMProviderError
 from src.api.services.rag_chat import NoGroundedContextError, RAGChatService
 from src.api.services.storage import storage_service
+from src.api.services.task_dispatcher import TaskDispatcher
 
 router = APIRouter()
+task_dispatcher = TaskDispatcher()
 
 # Dependency aliases to make route signatures cleaner
 CurrentUser = Depends(get_current_user)
@@ -71,7 +74,7 @@ async def upload_document(
     # 5. Upload to Supabase Storage
     try:
         await storage_service.upload_file(file_bytes, storage_path, file.content_type)
-    except Exception as e:
+    except Exception:
         # Ideally log this error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to upload to storage")
 
@@ -87,12 +90,13 @@ async def upload_document(
         version=version
     )
     
-    # 7. Semantic Processing Pipeline
-    from src.api.services.pipeline import DocumentPipelineService
-    
-    # We await this directly, but in a future iteration, this is the exact line 
-    # you would offload to a background task (e.g. Celery).
-    await DocumentPipelineService.process_document(db, document.id, file_bytes)
+    # 7. Queue parsing, chunking, and embedding work after durable storage succeeds.
+    await task_dispatcher.enqueue_document_pipeline(
+        db,
+        current_user["sub"],
+        case_id,
+        {"document_id": str(document.id), "storage_path": storage_path},
+    )
 
     return document
 
@@ -134,7 +138,7 @@ async def semantic_search(
         return SearchResponse(results=results)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Search failed")
 
 

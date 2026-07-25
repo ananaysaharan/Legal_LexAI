@@ -12,6 +12,7 @@ from src.api.schemas.orchestration import OrchestrationFailure, OrchestrationRes
 from src.api.services.cases import CaseService
 from src.api.services.memory_manager import MemoryManager
 from src.api.services.orchestration import LegalWorkflow
+from src.api.services.task_dispatcher import TaskDispatcher
 
 
 class ExecutionRecordService:
@@ -60,9 +61,11 @@ class AIExecutionEngine:
         self,
         workflow: LegalWorkflow | None = None,
         memory_manager: MemoryManager | None = None,
+        task_dispatcher: TaskDispatcher | None = None,
     ) -> None:
         self._workflow = workflow or LegalWorkflow()
-        self._memory_manager = memory_manager or MemoryManager()
+        self._memory_manager = memory_manager
+        self._task_dispatcher = task_dispatcher or TaskDispatcher()
 
     async def execute(
         self,
@@ -103,9 +106,14 @@ class AIExecutionEngine:
             duration_ms=duration_ms,
         )
         try:
-            await self._memory_manager.record_execution(db, execution, workflow_result)
+            if self._memory_manager is not None:
+                await self._memory_manager.record_execution(db, execution, workflow_result)
+            elif workflow_result.status == "completed":
+                await self._task_dispatcher.enqueue_memory_update(
+                    db, user_id, case_id, {"execution_id": str(execution.id)}
+                )
         except Exception:
-            # Memory persistence must not invalidate an otherwise successful execution.
+            # Background bookkeeping must not invalidate an otherwise successful execution.
             pass
         return AIExecutionResponse(
             execution_id=execution.id,

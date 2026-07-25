@@ -66,6 +66,35 @@ The current RAG chat route uses retrieval, prompt construction, Gemini generatio
 
 ## Local development
 
+### Docker development stack
+
+Copy the container environment template, fill the Supabase and Gemini values, then start the hot-reload stack:
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up --build
+```
+
+This exposes Next.js at `http://localhost:3000`, FastAPI at `http://localhost:8000`, PostgreSQL at `localhost:5432`, and Redis at `localhost:6379`. The development Compose file bind-mounts backend and frontend source while keeping container-local `node_modules` and Next build output in named volumes.
+
+### Docker production stack
+
+```bash
+cp .env.example .env
+# Replace every placeholder in .env before deployment.
+docker compose up --build -d
+```
+
+The production build uses multi-stage Dockerfiles: build toolchains and Node dependencies remain in build stages, while final API and web images contain only runtime dependencies and run as non-root users. Public Next.js variables are build arguments because Next.js embeds them in its browser bundle; keep private Supabase and Gemini credentials only in the API/worker environment.
+
+`postgres_data` and `redis_data` are durable named volumes. PostgreSQL runs the pgvector extension initializer on first volume creation. The API and web services share the public network; PostgreSQL, Redis, and Celery worker use the private internal network, with only API and web ports published. Background work is processed with:
+
+```bash
+docker compose exec worker celery -A src.api.tasks.celery_app inspect ping
+```
+
+Jobs are tracked in PostgreSQL and expose queued, running, succeeded, and failed states. Celery retries transient failures with exponential backoff; permanent failures retain error metadata for recovery or manual retry.
+
 ### Backend
 
 ```bash

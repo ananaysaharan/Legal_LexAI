@@ -1,7 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.routes import ai, health, users, cases, intents, memory, plans, workers, orchestration
+
 from src.api.config import settings
+from src.api.routes import (
+    ai,
+    cases,
+    generated_documents,
+    health,
+    intents,
+    jobs,
+    memory,
+    orchestration,
+    plans,
+    users,
+    workers,
+)
+
 
 def create_app() -> FastAPI:
     """
@@ -17,7 +31,11 @@ def create_app() -> FastAPI:
     # Configure CORS for local development (will be tightened for production)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            origin.strip()
+            for origin in settings.cors_origins.split(",")
+            if origin.strip()
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -33,6 +51,8 @@ def create_app() -> FastAPI:
     app.include_router(orchestration.router, prefix="/orchestration", tags=["orchestration"])
     app.include_router(ai.router, prefix="/ai", tags=["ai"])
     app.include_router(memory.router, prefix="/memory", tags=["memory"])
+    app.include_router(generated_documents.router, prefix="/generated-documents", tags=["generated-documents"])
+    app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 
     return app
 

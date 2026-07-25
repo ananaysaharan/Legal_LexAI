@@ -20,7 +20,7 @@ class StorageService:
         # Note: supabase-py storage methods are currently synchronous.
         # In a very high-throughput async app, we might wrap this in a threadpool
         # (run_in_executor) to prevent blocking the event loop.
-        res = self.client.storage.from_(self.bucket).upload(
+        self.client.storage.from_(self.bucket).upload(
             path=storage_path,
             file=file_bytes,
             file_options={"content-type": content_type}
@@ -32,5 +32,8 @@ class StorageService:
         Deletes a file from Supabase Storage.
         """
         self.client.storage.from_(self.bucket).remove([storage_path])
+
+    async def download_file(self, storage_path: str) -> bytes:
+        return self.client.storage.from_(self.bucket).download(storage_path)
 
 storage_service = StorageService()

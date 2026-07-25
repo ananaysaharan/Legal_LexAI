@@ -1,0 +1,9 @@
+.git
+.ruff_cache
+.env
+**/.env
+**/.env.local
+**/node_modules
+**/.next
+**/__pycache__
+**/.venv

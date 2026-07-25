@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from string import Template
-from typing import Protocol, Sequence
+from typing import Protocol
 
 from src.api.schemas.intent import Intent, IntentType
 from src.api.schemas.memory import PlanningMemoryContext
