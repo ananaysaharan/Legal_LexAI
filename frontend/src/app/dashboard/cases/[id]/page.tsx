@@ -51,7 +51,7 @@ export default function CaseDetailPage() {
       setDocuments(docsRes.data)
     } catch {
       router.push("/dashboard")
-    } finally {
+    } font-sans finally {
       setLoading(false)
     }
   }, [caseId, router])
@@ -61,7 +61,6 @@ export default function CaseDetailPage() {
   }, [caseId, fetchCaseDetails])
 
   const handleUploadComplete = () => {
-    // Reset uploader and refresh the list
     setUploaderKey(k => k + 1)
     fetchCaseDetails()
   }
@@ -79,8 +78,8 @@ export default function CaseDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-zinc-500">Loading case...</p>
+          <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-slate-500 font-medium">Loading case...</p>
         </div>
       </div>
     )
@@ -94,50 +93,42 @@ export default function CaseDetailPage() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-6 text-slate-900 font-sans">
         {/* Header */}
         <div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors mb-5"
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-4"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Dashboard
+            &larr; Back to Cases
           </button>
 
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-100">{caseData.title}</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">{caseData.title}</h1>
               {caseData.description && (
-                <p className="text-zinc-500 mt-1.5 text-sm leading-relaxed max-w-xl">{caseData.description}</p>
+                <p className="text-slate-600 mt-1 text-xs leading-relaxed max-w-xl">{caseData.description}</p>
               )}
             </div>
-            <Badge variant="outline" className="border-zinc-700 text-zinc-400 flex-shrink-0 mt-1">
+            <Badge variant="outline" className="border-slate-300 text-slate-700 flex-shrink-0 mt-1">
               {documents.length} {documents.length === 1 ? "document" : "documents"}
             </Badge>
           </div>
 
           {/* Stats strip */}
           {documents.length > 0 && (
-            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-zinc-800/60">
+            <div className="flex items-center gap-6 mt-4 pt-3 border-t border-slate-200 text-xs">
               <div>
-                <p className="text-xs text-zinc-600 uppercase tracking-wide">Total size</p>
-                <p className="text-sm font-medium text-zinc-300 mt-0.5">{formatBytes(totalSize)}</p>
+                <p className="text-[11px] text-slate-500 uppercase tracking-wide">Total size</p>
+                <p className="font-semibold text-slate-800 mt-0.5">{formatBytes(totalSize)}</p>
               </div>
-              <div className="w-px h-8 bg-zinc-800" />
+              <div className="w-px h-6 bg-slate-200" />
               <div>
-                <p className="text-xs text-zinc-600 uppercase tracking-wide">Last upload</p>
-                <p className="text-sm font-medium text-zinc-300 mt-0.5">
+                <p className="text-[11px] text-slate-500 uppercase tracking-wide">Last upload</p>
+                <p className="font-semibold text-slate-800 mt-0.5">
                   {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
                     .format(new Date(documents[documents.length - 1]?.created_at))}
                 </p>
-              </div>
-              <div className="w-px h-8 bg-zinc-800" />
-              <div>
-                <p className="text-xs text-zinc-600 uppercase tracking-wide">Processing</p>
-                <p className="text-sm font-medium text-emerald-400 mt-0.5">All ready</p>
               </div>
             </div>
           )}
@@ -146,11 +137,11 @@ export default function CaseDetailPage() {
         <ExecutionWorkspace caseId={caseId} />
 
         {/* Upload Section */}
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="bg-white border-slate-200 shadow-2xs">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-zinc-200">Upload Document</CardTitle>
-            <CardDescription className="text-zinc-500 text-sm">
-              PDFs are automatically parsed, chunked, and embedded for semantic search.
+            <CardTitle className="text-sm font-bold text-slate-900">Upload Document</CardTitle>
+            <CardDescription className="text-slate-500 text-xs">
+              Upload PDF legal documents to index for search and research.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -163,36 +154,28 @@ export default function CaseDetailPage() {
         </Card>
 
         {/* Documents List */}
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="bg-white border-slate-200 shadow-2xs">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
-              <CardTitle className="text-base text-zinc-200">Documents</CardTitle>
-              <CardDescription className="text-zinc-500 text-sm mt-0.5">
-                {documents.length === 0 ? "No documents yet" : `${documents.length} document${documents.length > 1 ? "s" : ""} indexed and ready`}
+              <CardTitle className="text-sm font-bold text-slate-900">Documents</CardTitle>
+              <CardDescription className="text-slate-500 text-xs mt-0.5">
+                {documents.length === 0 ? "No documents uploaded" : `${documents.length} document${documents.length > 1 ? "s" : ""} available`}
               </CardDescription>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={fetchCaseDetails}
-              className="h-7 px-2.5 text-xs text-zinc-500 hover:text-zinc-300"
+              className="h-7 px-2 text-xs text-slate-600 hover:text-slate-900"
             >
-              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
               Refresh
             </Button>
           </CardHeader>
           <CardContent>
             {documents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-zinc-400">No documents yet</p>
-                <p className="text-xs text-zinc-600 mt-1">Upload a PDF above to get started</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-xs font-medium text-slate-600">No documents yet</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Upload a PDF above to get started</p>
               </div>
             ) : (
               <div className="space-y-2">

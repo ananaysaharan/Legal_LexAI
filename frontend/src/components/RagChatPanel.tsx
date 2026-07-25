@@ -10,7 +10,6 @@ import {
   LoaderCircle,
   MessageSquarePlus,
   Quote,
-  Sparkles,
   TriangleAlert,
   UserRound,
 } from "lucide-react"
@@ -92,13 +91,13 @@ function conversationTitle(conversation: Conversation) {
 function renderInline(value: string): ReactNode[] {
   return value.split(/(\*\*[^*]+\*\*|`[^`]+`|\[Source \d+\])/g).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={index} className="font-semibold text-zinc-100">{part.slice(2, -2)}</strong>
+      return <strong key={index} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>
     }
     if (part.startsWith("`") && part.endsWith("`")) {
-      return <code key={index} className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[0.82em] text-violet-200">{part.slice(1, -1)}</code>
+      return <code key={index} className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.82em] text-slate-800 border border-slate-200">{part.slice(1, -1)}</code>
     }
     if (/^\[Source \d+\]$/.test(part)) {
-      return <span key={index} className="font-medium text-violet-300">{part}</span>
+      return <span key={index} className="font-bold text-slate-900 underline">{part}</span>
     }
     return part
   })
@@ -112,7 +111,7 @@ function MarkdownAnswer({ content }: { content: string }) {
   const flushList = () => {
     if (!listItems.length) return
     blocks.push(
-      <ul key={`list-${blocks.length}`} className="my-2 list-disc space-y-1 pl-5 marker:text-violet-400">
+      <ul key={`list-${blocks.length}`} className="my-2 list-disc space-y-1 pl-5 marker:text-slate-700">
         {listItems.map((item, index) => <li key={index}>{renderInline(item)}</li>)}
       </ul>
     )
@@ -127,10 +126,10 @@ function MarkdownAnswer({ content }: { content: string }) {
     flushList()
     if (!line.trim()) return
     if (line.startsWith("### ") || line.startsWith("## ")) {
-      blocks.push(<h4 key={index} className="mt-3 mb-1 font-semibold text-zinc-100">{renderInline(line.replace(/^#{2,3}\s+/, ""))}</h4>)
+      blocks.push(<h4 key={index} className="mt-3 mb-1 font-bold text-slate-900">{renderInline(line.replace(/^#{2,3}\s+/, ""))}</h4>)
       return
     }
-    blocks.push(<p key={index} className="leading-6">{renderInline(line)}</p>)
+    blocks.push(<p key={index} className="leading-relaxed">{renderInline(line)}</p>)
   })
   flushList()
   return <div className="space-y-2">{blocks}</div>
@@ -149,11 +148,11 @@ function CitationCards({
 }) {
   if (!citations.length) return null
   return (
-    <div className="mt-4 border-t border-zinc-800/80 pt-3">
-      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
-        <Quote className="size-3" /> Grounding sources
+    <div className="mt-3 border-t border-slate-200 pt-2.5">
+      <p className="mb-2 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <Quote className="size-3" /> Grounding Sources
       </p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-1.5 sm:grid-cols-2">
         {citations.map((citation) => {
           const source = sources.find((item) => item.chunk_id === citation.chunk_id)
           const document = documents.find((item) => item.id === source?.document_id)
@@ -163,14 +162,14 @@ function CitationCards({
               type="button"
               disabled={!document}
               onClick={() => document && onCitationClick(document, citation.page_number, citation.chunk_id)}
-              className="group flex min-w-0 items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/70 px-2.5 py-2 text-left transition hover:border-violet-500/40 hover:bg-violet-500/5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex min-w-0 items-center gap-2 rounded border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left transition hover:border-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-300"><FileText className="size-3.5" /></span>
+              <span className="flex size-6 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-700"><FileText className="size-3" /></span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-medium text-zinc-300 group-hover:text-violet-200">{citation.document_name}</span>
-                <span className="block text-[11px] text-zinc-500">{citation.source_label} · Page {citation.page_number}</span>
+                <span className="block truncate text-xs font-semibold text-slate-900">{citation.document_name}</span>
+                <span className="block text-[10px] text-slate-500">{citation.source_label} · Page {citation.page_number}</span>
               </span>
-              <ChevronRight className="size-3.5 shrink-0 text-zinc-600 group-hover:text-violet-300" />
+              <ChevronRight className="size-3 shrink-0 text-slate-400 group-hover:text-slate-700" />
             </button>
           )
         })}
@@ -262,53 +261,52 @@ export function RagChatPanel({ caseId, documents, onCitationClick }: RagChatPane
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/20">
-      <div className="grid min-h-[680px] lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="flex flex-col border-b border-zinc-800 bg-zinc-950/90 lg:border-r lg:border-b-0">
-          <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200"><BookOpenText className="size-4 text-violet-400" /> Research</div>
-            <Button variant="ghost" size="icon-sm" onClick={() => setActiveConversationId(null)} disabled={isStreaming} className="text-zinc-500 hover:text-zinc-200" aria-label="Start new conversation"><MessageSquarePlus /></Button>
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xs text-slate-900 font-sans">
+      <div className="grid min-h-[580px] lg:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className="flex flex-col border-b border-slate-200 bg-slate-50/50 lg:border-r lg:border-b-0">
+          <div className="flex items-center justify-between px-3.5 py-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900"><BookOpenText className="size-3.5" /> Research Threads</div>
+            <Button variant="ghost" size="icon-sm" onClick={() => setActiveConversationId(null)} disabled={isStreaming} className="text-slate-600 hover:text-slate-900" aria-label="Start new conversation"><MessageSquarePlus className="size-3.5" /></Button>
           </div>
           <div className="flex gap-2 overflow-x-auto px-2 pb-3 lg:block lg:space-y-1 lg:overflow-y-auto">
             {conversations.map((conversation) => (
-              <button key={conversation.id} type="button" disabled={isStreaming} onClick={() => setActiveConversationId(conversation.id)} className={cn("min-w-44 rounded-lg px-3 py-2.5 text-left transition lg:block lg:w-full", conversation.id === activeConversationId ? "bg-violet-500/10 text-violet-100 ring-1 ring-violet-500/25" : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300")}>
-                <span className="block truncate text-xs font-medium">{conversationTitle(conversation)}</span>
-                <span className="mt-1 block text-[10px] text-zinc-600">{conversation.messages.length} messages</span>
+              <button key={conversation.id} type="button" disabled={isStreaming} onClick={() => setActiveConversationId(conversation.id)} className={cn("min-w-40 rounded px-2.5 py-2 text-left transition lg:block lg:w-full", conversation.id === activeConversationId ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900")}>
+                <span className="block truncate text-xs font-semibold">{conversationTitle(conversation)}</span>
+                <span className="mt-0.5 block text-[10px] opacity-70">{conversation.messages.length} messages</span>
               </button>
             ))}
-            {!conversations.length && <p className="px-3 py-4 text-xs leading-5 text-zinc-600">Your case research conversations will appear here.</p>}
+            {!conversations.length && <p className="px-3 py-3 text-xs text-slate-400">Research conversations will appear here.</p>}
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-col">
-          <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
-            <div className="flex items-center gap-2.5"><span className="flex size-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-300"><Sparkles className="size-4" /></span><div><h2 className="text-sm font-semibold text-zinc-100">Ask your case documents</h2><p className="text-xs text-zinc-500">Answers are grounded in retrieved evidence</p></div></div>
-            <span className="hidden rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 sm:block">Grounded</span>
+          <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <div className="flex items-center gap-2"><Bot className="size-4 text-slate-700" /><div><h2 className="text-xs font-bold text-slate-900">Document Research Query</h2></div></div>
           </header>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-6">
+          <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5">
             {!activeConversation?.messages.length ? (
-              <div className="mx-auto flex max-w-md flex-col items-center py-16 text-center"><span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-300"><Bot className="size-6" /></span><h3 className="text-base font-semibold text-zinc-200">Start with a document question</h3><p className="mt-2 text-sm leading-6 text-zinc-500">Ask about obligations, dates, clauses, or differences across the documents in this case.</p><div className="mt-6 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => setQuestion("What are the key obligations in this case?")} className="rounded-full border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition hover:border-violet-500/40 hover:text-violet-200">Key obligations</button><button type="button" onClick={() => setQuestion("What termination rights are described?")} className="rounded-full border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition hover:border-violet-500/40 hover:text-violet-200">Termination rights</button></div></div>
+              <div className="mx-auto flex max-w-sm flex-col items-center py-12 text-center"><Bot className="size-8 text-slate-400 mb-2" /><h3 className="text-sm font-bold text-slate-900">Ask a question about this case</h3><p className="mt-1 text-xs text-slate-500">Ask about obligations, dates, clauses, or differences across case documents.</p><div className="mt-4 flex flex-wrap justify-center gap-1.5"><button type="button" onClick={() => setQuestion("What are the key obligations in this case?")} className="rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-100">Key obligations</button><button type="button" onClick={() => setQuestion("What termination rights are described?")} className="rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-100">Termination rights</button></div></div>
             ) : activeConversation.messages.map((message) => (
-              <article key={message.id} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
-                {message.role === "assistant" && <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-300"><Bot className="size-4" /></span>}
-                <div className={cn("max-w-[88%] rounded-2xl px-4 py-3 text-sm", message.role === "user" ? "bg-violet-600 text-white" : "border border-zinc-800 bg-zinc-900/60 text-zinc-300")}>
-                  {message.role === "assistant" ? <MarkdownAnswer content={message.content || ""} /> : <p className="leading-6">{message.content}</p>}
+              <article key={message.id} className={cn("flex gap-2.5", message.role === "user" ? "justify-end" : "justify-start")}>
+                {message.role === "assistant" && <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-700"><Bot className="size-3.5" /></span>}
+                <div className={cn("max-w-[85%] rounded-lg px-3.5 py-2.5 text-xs leading-relaxed", message.role === "user" ? "bg-slate-900 text-white font-medium" : "border border-slate-200 bg-slate-50 text-slate-800")}>
+                  {message.role === "assistant" ? <MarkdownAnswer content={message.content || ""} /> : <p>{message.content}</p>}
                   {message.role === "assistant" && message.content && <CitationCards citations={message.citations ?? []} sources={message.sources ?? []} documents={documents} onCitationClick={onCitationClick} />}
                 </div>
-                {message.role === "user" && <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300"><UserRound className="size-3.5" /></span>}
+                {message.role === "user" && <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-700"><UserRound className="size-3" /></span>}
               </article>
             ))}
-            {isStreaming && <div className="flex items-center gap-2 text-xs text-zinc-500"><LoaderCircle className="size-3.5 animate-spin text-violet-400" /> Researching retrieved documents…</div>}
+            {isStreaming && <div className="flex items-center gap-2 text-xs text-slate-500"><LoaderCircle className="size-3.5 animate-spin" /> Querying documents...</div>}
           </div>
 
-          <div className="border-t border-zinc-800 p-4">
-            {error && <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300"><TriangleAlert className="size-3.5" />{error}</div>}
-            <form onSubmit={submit} className="rounded-xl border border-zinc-700 bg-zinc-900/80 p-2 shadow-inner shadow-black/10 focus-within:border-violet-500/60">
-              <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder="Ask a question about this case…" rows={2} disabled={isStreaming || !documents.length} className="w-full resize-none bg-transparent px-2 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none disabled:cursor-not-allowed" />
-              <div className="flex items-center justify-between px-1"><span className="text-[11px] text-zinc-600">Enter to send · Shift + Enter for a new line</span><Button type="submit" size="icon-sm" disabled={!question.trim() || isStreaming || !documents.length} className="bg-violet-600 text-white hover:bg-violet-500"><ArrowUp /></Button></div>
+          <div className="border-t border-slate-200 p-3">
+            {error && <div className="mb-2 flex items-center gap-2 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-700"><TriangleAlert className="size-3.5" />{error}</div>}
+            <form onSubmit={submit} className="rounded border border-slate-300 bg-white p-1.5 focus-within:border-slate-900">
+              <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder="Ask a question about this case..." rows={2} disabled={isStreaming || !documents.length} className="w-full resize-none bg-transparent px-2 py-1 text-xs text-slate-900 placeholder:text-slate-400 outline-none disabled:cursor-not-allowed" />
+              <div className="flex items-center justify-between px-1"><span className="text-[10px] text-slate-400">Enter to send · Shift + Enter for new line</span><Button type="submit" size="icon-sm" disabled={!question.trim() || isStreaming || !documents.length} className="bg-slate-900 text-white hover:bg-slate-800 text-xs h-7 w-7"><ArrowUp className="size-3.5" /></Button></div>
             </form>
-            {!documents.length && <p className="mt-2 text-xs text-amber-400/80">Upload and process a document before starting research.</p>}
+            {!documents.length && <p className="mt-1 text-[11px] text-slate-500">Upload a document before starting research.</p>}
           </div>
         </div>
       </div>
