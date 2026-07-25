@@ -1,12 +1,22 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Text
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy.dialects.postgresql import UUID
+
 from pgvector.sqlalchemy import Vector
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
+
 
 class Case(Base):
     __tablename__ = "cases"
@@ -20,15 +30,27 @@ class Case(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    documents = relationship("Document", back_populates="case", cascade="all, delete-orphan")
-    conversations = relationship("Conversation", back_populates="case", cascade="all, delete-orphan")
+    documents = relationship(
+        "Document", back_populates="case", cascade="all, delete-orphan"
+    )
+    conversations = relationship(
+        "Conversation", back_populates="case", cascade="all, delete-orphan"
+    )
+    executions = relationship(
+        "AIExecution", back_populates="case", cascade="all, delete-orphan"
+    )
+    memories = relationship(
+        "CaseMemory", back_populates="case", cascade="all, delete-orphan"
+    )
 
 
 class Document(Base):
     __tablename__ = "documents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False)
+    case_id = Column(
+        UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False
+    )
     filename = Column(String, nullable=False)
     storage_path = Column(String, nullable=False, unique=True)
     content_type = Column(String, nullable=False)
@@ -39,15 +61,23 @@ class Document(Base):
 
     # Relationships
     case = relationship("Case", back_populates="documents")
-    pages = relationship("DocumentPage", back_populates="document", cascade="all, delete-orphan")
-    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+    pages = relationship(
+        "DocumentPage", back_populates="document", cascade="all, delete-orphan"
+    )
+    chunks = relationship(
+        "DocumentChunk", back_populates="document", cascade="all, delete-orphan"
+    )
 
 
 class DocumentPage(Base):
     __tablename__ = "document_pages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    document_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     page_number = Column(Integer, nullable=False)
     text_content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -55,11 +85,16 @@ class DocumentPage(Base):
     # Relationships
     document = relationship("Document", back_populates="pages")
 
+
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    document_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     page_number = Column(Integer, nullable=False)
     chunk_index = Column(Integer, nullable=False)
     section = Column(String, nullable=True)
@@ -76,9 +111,16 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True)
+    case_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     case = relationship("Case", back_populates="conversations")
     messages = relationship(
@@ -105,3 +147,99 @@ class ConversationMessage(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     conversation = relationship("Conversation", back_populates="messages")
+
+
+class AIExecution(Base):
+    """Durable record of one AI-engine request for audit, memory, and evaluation."""
+
+    __tablename__ = "ai_executions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    case_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(String, nullable=False, index=True)
+    request_text = Column(Text, nullable=False)
+    status = Column(String(20), nullable=False)
+    intent_data = Column(JSONB, nullable=True)
+    plan_data = Column(JSONB, nullable=True)
+    trace_data = Column(JSONB, nullable=False, default=list)
+    result_data = Column(JSONB, nullable=True)
+    error_data = Column(JSONB, nullable=True)
+    duration_ms = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+
+    case = relationship("Case", back_populates="executions")
+
+
+class CaseMemory(Base):
+    """Curated, case-scoped memory. This is not a raw chat transcript."""
+
+    __tablename__ = "case_memories"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    case_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    memory_type = Column(String(80), nullable=False, index=True)
+    memory_key = Column(String(255), nullable=True, index=True)
+    content = Column(Text, nullable=False)
+    metadata_data = Column(JSONB, nullable=False, default=dict)
+    source_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("ai_executions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    source_document_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("documents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    source_conversation_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("conversations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    case = relationship("Case", back_populates="memories")
+
+
+class UserPreferenceMemory(Base):
+    """Long-lived, cross-case user preferences. Never store case facts here."""
+
+    __tablename__ = "user_preference_memories"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "preference_key", "scope", name="uq_user_preference_scope"
+        ),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(String, nullable=False, index=True)
+    preference_type = Column(String(80), nullable=False, index=True)
+    preference_key = Column(String(120), nullable=False)
+    preference_value = Column(JSONB, nullable=False)
+    scope = Column(String(80), nullable=False, default="global")
+    metadata_data = Column(JSONB, nullable=False, default=dict)
+    confidence = Column(Integer, nullable=False, default=100)
+    usage_count = Column(Integer, nullable=False, default=0)
+    last_used_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )

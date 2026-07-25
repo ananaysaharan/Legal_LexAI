@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { DocumentUploader } from "@/components/DocumentUploader"
 import { DocumentCard } from "@/components/DocumentCard"
 import { PDFPreviewModal } from "@/components/PDFPreviewModal"
-import { RagChatPanel } from "@/components/RagChatPanel"
+import { ExecutionWorkspace } from "@/components/ExecutionWorkspace"
 
 interface Document {
   id: string
@@ -143,14 +143,7 @@ export default function CaseDetailPage() {
           )}
         </div>
 
-        <RagChatPanel
-          caseId={caseId}
-          documents={documents}
-          onCitationClick={(document, page) => {
-            setPreviewDoc(document as Document)
-            setPreviewPage(page)
-          }}
-        />
+        <ExecutionWorkspace caseId={caseId} />
 
         {/* Upload Section */}
         <Card className="bg-zinc-950 border-zinc-800">

@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
 
 from src.api.schemas.intent import Intent
+from src.api.schemas.memory import PlanningMemoryContext
 
 
 class PlanStepType(str, Enum):
@@ -37,4 +38,5 @@ class ExecutionPlan(BaseModel):
     planner: Literal["rule_based"] = "rule_based"
     prompt_template_version: str
     intent: Intent
+    planning_context: PlanningMemoryContext = Field(default_factory=PlanningMemoryContext)
     steps: List[PlanStep] = Field(min_length=1)

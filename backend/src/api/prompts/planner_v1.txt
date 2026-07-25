@@ -8,3 +8,6 @@ Rules:
 
 Intent:
 $intent_json
+
+Relevant planning memory (already ranked and bounded; do not assume omitted memories):
+$planning_context_json
