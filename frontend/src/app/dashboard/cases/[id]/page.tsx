@@ -51,7 +51,7 @@ export default function CaseDetailPage() {
       setDocuments(docsRes.data)
     } catch {
       router.push("/dashboard")
-    } font-sans finally {
+    } finally {
       setLoading(false)
     }
   }, [caseId, router])
